@@ -3,6 +3,7 @@ import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion
 } from "@whiskeysockets/baileys";
+
 import qrcode from "qrcode-terminal";
 
 async function startBot() {
@@ -12,25 +13,28 @@ async function startBot() {
   const sock = makeWASocket({
     version,
     auth: state,
-    browser: ["Bot Simple", "Chrome", "1.0.0"]
+    browser: ["Casa Hacienda Bot", "Chrome", "1.0.0"]
   });
 
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", ({ connection, qr, lastDisconnect }) => {
     if (qr) {
-      console.log("\n📲 ESCANEA ESTE QR DESDE WHATSAPP\n");
+      console.log("\n📲 Escanea este QR desde WhatsApp:\n");
       qrcode.generate(qr, { small: true });
     }
 
     if (connection === "close") {
       const shouldReconnect =
         lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+      console.log("Conexión caída. Reconectar:", shouldReconnect);
+
       if (shouldReconnect) startBot();
     }
 
     if (connection === "open") {
-      console.log("✅ Bot conectado exitosamente.");
+      console.log("✅ Bot conectado a WhatsApp.");
     }
   });
 
@@ -41,7 +45,9 @@ async function startBot() {
     const jid = msg.key.remoteJid;
     const text =
       msg.message.conversation ||
+      msg.message.extendedTextMessage?.text ||
       msg.message.buttonsResponseMessage?.selectedButtonId ||
+      msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.id ||
       "";
 
     console.log("📩 Mensaje recibido:", text);
@@ -53,19 +59,35 @@ async function startBot() {
     switch (text) {
       case "cliente_final":
         return sock.sendMessage(jid, {
-          text: "🧑 *Cliente final*\nMiel, algarrobina y más. Dinos qué buscas."
+          text:
+            "🧑 *Cliente final*\n\n" +
+            "Miel pura 100% natural 🍯\n" +
+            "• 1Kg S/46\n" +
+            "• 500gr S/28\n" +
+            "• 250gr S/19\n\n" +
+            "Dime qué presentación deseas."
         });
 
       case "cliente_mayorista":
         return sock.sendMessage(jid, {
           text:
-            "🏪 *Mayorista*\nTrabajamos con negocios. Envíanos tu RUC y destino."
+            "🏪 *Mayorista*\n\n" +
+            "Vendemos por mayor a:\n" +
+            "• Bodegas\n" +
+            "• Tiendas naturistas\n" +
+            "• Restaurantes\n" +
+            "• Cafeterías\n\n" +
+            "Envíame cantidad + destino y te cotizamos."
         });
 
       case "delivery":
         return sock.sendMessage(jid, {
           text:
-            "🚚 *Envíos a todo el Perú*\n\nDinos tu distrito o ciudad para cotizar."
+            "🚚 *Envíos a todo el Perú*\n\n" +
+            "Lima: courier privado 24h\n" +
+            "Provincia: Olva / Shalom / Marvisur\n" +
+            "Envíos desde S/9\n\n" +
+            "Dime tu distrito o ciudad para cotizar."
         });
 
       default:
@@ -76,41 +98,47 @@ async function startBot() {
   });
 }
 
+// 🔥 FORMATO DE BOTONES QUE SÍ FUNCIONA EN 2025
 async function sendMainMenu(sock, jid) {
   await sock.sendMessage(jid, {
-    text: "🐝 *Bienvenido a Casa Hacienda*\nElige una opción:",
-    viewOnce: true,
-    interactiveMessage: {
-      body: { text: "🐝 *Bienvenido a Casa Hacienda*\nElige una opción:" },
-      footer: { text: "Casa Hacienda" },
-      nativeFlowMessage: {
-        buttons: [
-          {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-              display_text: "🧑 Cliente Final",
-              id: "cliente_final"
-            })
+    viewOnceMessage: {
+      message: {
+        interactiveMessage: {
+          body: {
+            text: "🐝 *Bienvenido a Casa Hacienda*\n\nElige una opción:"
           },
-          {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-              display_text: "🏪 Mayorista",
-              id: "cliente_mayorista"
-            })
+          footer: {
+            text: "Casa Hacienda"
           },
-          {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-              display_text: "🚚 Delivery",
-              id: "delivery"
-            })
+          nativeFlowMessage: {
+            buttons: [
+              {
+                name: "quick_reply",
+                buttonParamsJson: JSON.stringify({
+                  display_text: "🧑 Cliente Final",
+                  id: "cliente_final"
+                })
+              },
+              {
+                name: "quick_reply",
+                buttonParamsJson: JSON.stringify({
+                  display_text: "🏪 Mayorista",
+                  id: "cliente_mayorista"
+                })
+              },
+              {
+                name: "quick_reply",
+                buttonParamsJson: JSON.stringify({
+                  display_text: "🚚 Envíos",
+                  id: "delivery"
+                })
+              }
+            ]
           }
-        ]
+        }
       }
     }
   });
 }
 
 startBot().catch(console.error);
-
