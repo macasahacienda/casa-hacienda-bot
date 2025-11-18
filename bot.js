@@ -79,25 +79,38 @@ async function startBot() {
 async function sendMainMenu(sock, jid) {
   await sock.sendMessage(jid, {
     text: "🐝 *Bienvenido a Casa Hacienda*\nElige una opción:",
-    buttons: [
-      {
-        buttonId: "cliente_final",
-        buttonText: { displayText: "🧑 Cliente final" },
-        type: 1
-      },
-      {
-        buttonId: "cliente_mayorista",
-        buttonText: { displayText: "🏪 Mayorista" },
-        type: 1
-      },
-      {
-        buttonId: "delivery",
-        buttonText: { displayText: "🚚 Envíos" },
-        type: 1
+    viewOnce: true,
+    interactiveMessage: {
+      body: { text: "🐝 *Bienvenido a Casa Hacienda*\nElige una opción:" },
+      footer: { text: "Casa Hacienda" },
+      nativeFlowMessage: {
+        buttons: [
+          {
+            name: "quick_reply",
+            buttonParamsJson: JSON.stringify({
+              display_text: "🧑 Cliente Final",
+              id: "cliente_final"
+            })
+          },
+          {
+            name: "quick_reply",
+            buttonParamsJson: JSON.stringify({
+              display_text: "🏪 Mayorista",
+              id: "cliente_mayorista"
+            })
+          },
+          {
+            name: "quick_reply",
+            buttonParamsJson: JSON.stringify({
+              display_text: "🚚 Delivery",
+              id: "delivery"
+            })
+          }
+        ]
       }
-    ],
-    headerType: 1
+    }
   });
 }
 
 startBot().catch(console.error);
+
